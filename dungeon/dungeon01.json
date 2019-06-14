@@ -1,0 +1,40 @@
+[
+    {
+        "row": [
+            {
+                "col": [
+                    {
+                        "start": true,
+                        "description": "starting room, stairs lead up",
+                        "players": []
+                    },
+                    {
+
+                        "description": "east of starting room",
+                        "players": []
+                    }
+                ]
+            },
+            {
+                "col": [
+                    {
+                        "description": "south of starting room",
+                        "players": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "row": [
+            {
+                "col": [
+                    {
+                        "description": "upstairs of starting room, stairs lead down",
+                        "players": []
+                    }
+                ]
+            }
+        ]
+    }
+]
