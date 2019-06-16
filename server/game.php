@@ -86,7 +86,7 @@ class Game {
             case "north":
                 if($this->dungeon->moveNorth($player, $connection)) {
                     // get the current position
-                    $position = $player.getPosition();
+                    $position = $player->getPosition();
                     // modify it to the new position
                     $position[1]--;
                     // modify the original player object to the new position

@@ -58,7 +58,13 @@ class Dungeon{
     // move up one row
     public function moveNorth($player) {
         $position = $player->getPosition();
-        if(!isset($this->dungeon[$position[0]]->row[$position[1]--]->col[$position[2]])) {
+        // echo "INSIDE MOVE NORTH: ";
+        // echo "position is: ";
+        // print_r($position);
+        // echo "\nplayers is: ";
+        // print_r(isset($this->dungeon[$position[0]]->row[$position[1] - 1]->col[$position[2]]->players));
+        // echo " end move north\n";
+        if(isset($this->dungeon[$position[0]]->row[$position[1] - 1]->col[$position[2]]->players)) {
             echo "INSIDE MOVENORTH ISSET\n";
             // remove that player from their current position
             unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$player->getName()]);
