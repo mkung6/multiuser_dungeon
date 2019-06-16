@@ -8,6 +8,7 @@ class Player {
     [2] = column
     */
     private $position;
+    // store the player's connection, so we can read/write to them specifically
     private $connection;
 
     public function __construct($name, $position, $connection) {

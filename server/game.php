@@ -5,43 +5,29 @@ require_once 'player.php';
 use React\Socket\ConnectionInterface;
 
 class Game {
-    /** @var SplObjectStorage  */
     protected $connections;
     protected $dungeon;
     protected $players;
 
-    public function __construct($dungeon)
-    {
+    public function __construct($dungeon) {
         $this->connections = new SplObjectStorage();
         $this->dungeon = $dungeon;
         $this->players = array();
     }
 
-    public function addPlayer(ConnectionInterface $connection)
-    {
+    public function addPlayer(ConnectionInterface $connection) {
         $connection->write("Enter your name: ");
         $this->initEvents($connection);
         $this->setConnectionData($connection, []);
     }
 
-    public function getUserName() {
-        return $this->userName;
-    }
-
-    /**
-     * @param ConnectionInterface $connection
-     */
+    /*
+    Initialize event listeners
+    */
     protected function initEvents(ConnectionInterface $connection)
     {
-        // On receiving the data we loop through other connections
-        // from the pool and write this data to them
         $connection->on('data', function ($data) use ($connection) {
             $connectionData = $this->getConnectionData($connection);
-            // It is the first data received, so we consider it as
-            // a users name.
-            // connection data has format:
-            // Array ( [name] -> 'userName' )
-            print_r($connectionData);
             if(empty($connectionData)) {
                 $this->addNewMember($data, $connection);
                 return;
@@ -50,15 +36,15 @@ class Game {
             // create shallow copy of player, such that we don't modify it directly
             // until operation is complete
             $player = clone $this->players[$name];
-            // $this->sendAll("$name: $data", $connection);
             $this->playerCommand($player, $data, $connection);
         });
-        // When connection closes detach it from the pool
+        // When connection closes remove player
         $connection->on('close', function() use ($connection){
             $data = $this->getConnectionData($connection);
             $name = $data['name'] ?? '';
+            $this->dungeon->removePlayerFromPosition($this->players[$name], $this->players[$name]->getPosition());
             $this->connections->offsetUnset($connection);
-            $this->sendAll("User $name leaves the chat\n", $connection);
+            unset($this->players[$name]);
         });
     }
 
@@ -105,10 +91,18 @@ class Game {
         $target = $this->players[$data[0]];
         // users should only be able to speak to each other if they are in the same room
         if($target->getPosition() == $player->getPosition()) {
-            $target->getConnection()->write($data[1]);
+            $target->getConnection()->write($player->getName() . " says " . $data[1]);
+        }
+        else {
+            $player->getConnection()->write($target->getName() . " is not here\n");
         }
     }
 
+    /*
+    Remove the current player from the players array
+    For example, they shouldn't get their own message when speaking in a room
+    return the players array after current user is removed from that array
+    */
     protected function dontIncludeCurrentPlayer($player) {
         $players = $this->dungeon->getPlayersInRoom($player->getPosition());
         $key = array_search($player->getName(), $players);
@@ -116,12 +110,15 @@ class Game {
         return $players;
     }
 
+    /*
+    Send a message to everyone else in the room
+    */
     protected function sayInRoom($player, $data, ConnectionInterface $connection) {
         $playersInRoom = $this->dontIncludeCurrentPlayer($player);
         foreach($this->connections as $conn) {
             foreach($playersInRoom as $otherPlayer) {
                 if($conn == $this->players[$otherPlayer]->getConnection()) {
-                    $conn->write($data);
+                    $conn->write($player->getName() . " says " . $data);
                 }
             }
         }
@@ -133,12 +130,14 @@ class Game {
     if that location does not exist, move is illegal
     otherwise, move the player there, update their position in the dungeon as well
     as that player's position field, and display the room description
-    TODO: try to refactor code here, looks repetitive
+    TODO: try to refactor code here, reduce repetition if possible
     */
     protected function movePlayer($player, $data, ConnectionInterface $connection) {
+        // remove newline character, otherwise switch won't work
         $data = strtolower(str_replace(["\n", "\r"], "", $data));
         switch($data) {
             case "north":
+                // if move is legal:
                 if($this->dungeon->moveNorth($player, $connection)) {
                     // get the current position
                     $position = $player->getPosition();
@@ -215,10 +214,11 @@ class Game {
     }
 
     protected function describeRoom($player, $connection) {
-        $connection->write($this->dungeon->getDescription($player->getPosition()));
+        // display room description
+        $connection->write($this->dungeon->getDescription($player->getPosition()) . "\n");
         $playersInRoom = $this->dontIncludeCurrentPlayer($player);
         // display all players in room, except the current player
-        // (they already know they're in there)
+        // (that person already knows they're in there)
         if(empty($playersInRoom)) {
             $connection->write("There is nobody else here\n");
         }
@@ -231,8 +231,7 @@ class Game {
         }
     }
 
-    protected function checkIsUniqueName($name)
-    {
+    protected function checkIsUniqueName($name) {
         foreach ($this->connections as $obj) {
             $data = $this->connections->offsetGet($obj);
             $takenName = $data['name'] ?? '';
@@ -241,8 +240,7 @@ class Game {
         return true;
     }
 
-    protected function addNewMember($name, ConnectionInterface $connection)
-    {
+    protected function addNewMember($name, ConnectionInterface $connection) {
         $name = str_replace(["\n", "\r"], "", $name);
         if(!$this->checkIsUniqueName($name)) {
             $connection->write("Name $name is already taken!\n");
@@ -255,26 +253,23 @@ class Game {
         $player = new Player($name, $playerPosition, $connection);
         // store this new player obj in the players array, where their name is the key
         // and value is their player object
+        // in PHP we don't push a key value pair, we just set it like this:
         $this->players[$name] = $player;
         // then describe their starting room
+        $connection->write("Commands: move, say, tell, yell.\nFor example 'move north'\n");
         $this->describeRoom($player, $connection);
-        $connection->write("Commands: move, say, tell, yell.\nFor example 'move north'\n\nEnter a command:\n");
-        // $this->sendAll("User $name joins the chat\n", $connection);
-
+        $connection->write("Enter a command:\n");
     }
 
-    protected function setConnectionData(ConnectionInterface $connection, $data)
-    {
+    protected function setConnectionData(ConnectionInterface $connection, $data) {
         $this->connections->offsetSet($connection, $data);
     }
 
-    protected function getConnectionData(ConnectionInterface $connection)
-    {
+    protected function getConnectionData(ConnectionInterface $connection) {
         return $this->connections->offsetGet($connection);
     }
 
     protected function sendAll($player, $data, ConnectionInterface $except) {
-        // $data here is what was typed in by the user
         foreach ($this->connections as $conn) {
             // send it to everyone except current connection (the user that sends it)
             if ($conn != $except) $conn->write($player->getName() . " yells " . strtoupper($data));
