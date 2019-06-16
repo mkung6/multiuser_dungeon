@@ -35,8 +35,18 @@ class Dungeon{
         return $this->startPosition;
     }
 
-    public function getDungeon() {
-        return $this->dungeon;
+    // public function getDungeon() {
+    //     return $this->dungeon;
+    // }
+
+    // get the description of a specific room
+    public function getDescription($position) {
+        return $this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->description;
+    }
+
+    // get all players currently in a specific room
+    public function getPlayersInRoom($position) {
+        return $this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players;
     }
 
     /*
@@ -49,27 +59,22 @@ class Dungeon{
         return $startPosition;
     }
 
-    private function setPosition($position) {
-
-    }
-
     // for all move functions, return true if move was succesful
+    // TODO: refactor move functions, reduce repetition and see if I can make it less wordy
+    // i.e. see if unset and push can be put in its own functions
 
     // move up one row
     public function moveNorth($player) {
         $position = $player->getPosition();
-        // echo "INSIDE MOVE NORTH: ";
-        // echo "position is: ";
-        // print_r($position);
-        // echo "\nplayers is: ";
-        // print_r(isset($this->dungeon[$position[0]]->row[$position[1] - 1]->col[$position[2]]->players));
-        // echo " end move north\n";
+        // check if move is legal if the players field exists there
         if(isset($this->dungeon[$position[0]]->row[$position[1] - 1]->col[$position[2]]->players)) {
-            echo "INSIDE MOVENORTH ISSET\n";
             // remove that player from their current position
-            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$player->getName()]);
+            // names are currently stored in players field as index number as key, with name as value
+            $key = array_search($player->getName(), $this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players);
+            //unset() deletes by key, not value
+            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$key]);
             // add them to their new position
-            array_push($this->dungeon[$position[0]]->row[$position[1]--]->col[$position[2]]->players, $player->getName());
+            array_push($this->dungeon[$position[0]]->row[$position[1] - 1]->col[$position[2]]->players, $player->getName());
             return true;
         }
         return false;
@@ -77,49 +82,54 @@ class Dungeon{
     // move right one column
     public function moveEast($player) {
         $position = $player->getPosition();
-        if(isset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]])) {
-            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$player->getName()]);
-            array_push($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players, $player->getName());
+        if(isset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2] + 1]->players)) {
+            $key = array_search($player->getName(), $this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players);
+            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$key]);
+            array_push($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2] + 1]->players, $player->getName());
             return true;
         }
         return false;
     }
-
+    // move down one row
     public function moveSouth($player) {
         $position = $player->getPosition();
-        if(isset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]])) {
-            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$player->getName()]);
-            array_push($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players, $player->getName());
+        if(isset($this->dungeon[$position[0]]->row[$position[1] + 1]->col[$position[2]]->players)) {
+            $key = array_search($player->getName(), $this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players);
+            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$key]);
+            array_push($this->dungeon[$position[0]]->row[$position[1] + 1]->col[$position[2]]->players, $player->getName());
             return true;
         }
         return false;
     }
-
+    // move left one column
     public function moveWest($player) {
         $position = $player->getPosition();
-        if(isset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]])) {
-            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$player->getName()]);
-            array_push($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players, $player->getName());
+        if(isset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2] - 1]->players)) {
+            $key = array_search($player->getName(), $this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players);
+            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$key]);
+            array_push($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2] - 1]->players, $player->getName());
             return true;
         }
         return false;
     }
-
+    // move up one floor
     public function moveUp($player) {
         $position = $player->getPosition();
-        if(isset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]])) {
-            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$player->getName()]);
-            array_push($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players, $player->getName());
+        if(isset($this->dungeon[$position[0] + 1]->row[$position[1]]->col[$position[2]]->players)) {
+            $key = array_search($player->getName(), $this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players);
+            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$key]);
+            array_push($this->dungeon[$position[0] + 1]->row[$position[1]]->col[$position[2]]->players, $player->getName());
             return true;
         }
         return false;
     }
-
+    // move down one floor
     public function moveDown($player) {
         $position = $player->getPosition();
-        if(isset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]])) {
-            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$player->getName()]);
-            array_push($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players, $player->getName());
+        if(isset($this->dungeon[$position[0] - 1]->row[$position[1]]->col[$position[2]]->players)) {
+            $key = array_search($player->getName(), $this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players);
+            unset($this->dungeon[$position[0]]->row[$position[1]]->col[$position[2]]->players[$key]);
+            array_push($this->dungeon[$position[0] - 1]->row[$position[1]]->col[$position[2]]->players, $player->getName());
             return true;
         }
         return false;

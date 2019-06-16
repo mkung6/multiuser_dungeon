@@ -8,22 +8,29 @@ class Player {
     [2] = column
     */
     private $position;
+    private $connection;
 
-    public function __construct($name, $position) {
+    public function __construct($name, $position, $connection) {
         $this->name = $name;
         $this->position = $position;
+        $this->connection = $connection;
     }
 
     public function setPosition($position) {
         $this->position = $position;
     }
 
+    public function getName() {
+        return $this->name;
+    }
+
     public function getPosition() {
         return $this->position;
     }
 
-    public function getName() {
-        return $this->name;
+    public function getConnection() {
+        return $this->connection;
     }
+
 }
 ?>

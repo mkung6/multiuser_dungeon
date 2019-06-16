@@ -48,6 +48,7 @@ class Game {
             }
             $name = $connectionData['name'];
             // create shallow copy of player, such that we don't modify it directly
+            // until operation is complete
             $player = clone $this->players[$name];
             // $this->sendAll("$name: $data", $connection);
             $this->playerCommand($player, $data, $connection);
@@ -67,19 +68,73 @@ class Game {
     *Evaluate what the player wants to do, and perform logic based on that data
     */
     protected function playerCommand($player, $data, ConnectionInterface $connection) {
-        $temp = explode(' ', $data);
-        $command = $temp[0];
-        unset($temp[0]);
-        $data = implode(' ', $temp);
-        switch(strtolower($command)) {
+        $data = $this->takeCommand($data);
+        switch(strtolower($data[0])) {
             case 'move':
-                $this->movePlayer($player, $data, $connection);
+                $this->movePlayer($player, $data[1], $connection);
+                break;
+            case 'say':
+                $this->sayInRoom($player, $data[1], $connection);
+                break;
+            case 'tell':
+                $this->privateMessage($player, $data[1]);
+                break;
+            case 'yell':
+                $this->sendAll($player, $data[1], $connection);
                 break;
             default:
                 $connection->write("I do not understand. Please enter a command:\n");
         }
     }
 
+    /*
+    Split the user's input
+    Where the first word should be the command, or the target they want to speak to
+    The rest of the string being the direction or message, for example
+    */
+    protected function takeCommand($data) {
+        $temp = explode(' ', $data);
+        $command = $temp[0];
+        unset($temp[0]);
+        $data = implode(' ', $temp);
+        return array( $command, $data );
+    }
+
+    protected function privateMessage($player, $data) {
+        $data = $this->takeCommand($data);
+        $target = $this->players[$data[0]];
+        // users should only be able to speak to each other if they are in the same room
+        if($target->getPosition() == $player->getPosition()) {
+            $target->getConnection()->write($data[1]);
+        }
+    }
+
+    protected function dontIncludeCurrentPlayer($player) {
+        $players = $this->dungeon->getPlayersInRoom($player->getPosition());
+        $key = array_search($player->getName(), $players);
+        unset($players[$key]);
+        return $players;
+    }
+
+    protected function sayInRoom($player, $data, ConnectionInterface $connection) {
+        $playersInRoom = $this->dontIncludeCurrentPlayer($player);
+        foreach($this->connections as $conn) {
+            foreach($playersInRoom as $otherPlayer) {
+                if($conn == $this->players[$otherPlayer]->getConnection()) {
+                    $conn->write($data);
+                }
+            }
+        }
+    }
+
+    /*
+    If command was 'move', we see which direction the player wants to move in
+    then perform the correct logic based on that direction
+    if that location does not exist, move is illegal
+    otherwise, move the player there, update their position in the dungeon as well
+    as that player's position field, and display the room description
+    TODO: try to refactor code here, looks repetitive
+    */
     protected function movePlayer($player, $data, ConnectionInterface $connection) {
         $data = strtolower(str_replace(["\n", "\r"], "", $data));
         switch($data) {
@@ -88,9 +143,12 @@ class Game {
                     // get the current position
                     $position = $player->getPosition();
                     // modify it to the new position
-                    $position[1]--;
+                    $position[1] -= 1;
                     // modify the original player object to the new position
-                    $this->players[$player->getname()]->setPosition($position);
+                    $this->players[$player->getName()]->setPosition($position);
+                    // then describe the room that the player is now in
+                    // pass player by reference, after having modified it
+                    $this->describeRoom($this->players[$player->getName()], $connection);
                 }
                 else {
                     $connection->write("Illegal move. Enter a command:\n");
@@ -98,6 +156,10 @@ class Game {
                 break;
             case "east":
                 if($this->dungeon->moveEast($player, $connection)) {
+                    $position = $player->getPosition();
+                    $position[2] += 1;
+                    $this->players[$player->getName()]->setPosition($position);
+                    $this->describeRoom($this->players[$player->getName()], $connection);
                 }
                 else {
                     $connection->write("Illegal move. Enter a command:\n");
@@ -105,7 +167,10 @@ class Game {
                 break;
             case 'south':
                 if($this->dungeon->moveSouth($player, $connection)) {
-
+                    $position = $player->getPosition();
+                    $position[1] += 1;
+                    $this->players[$player->getName()]->setPosition($position);
+                    $this->describeRoom($this->players[$player->getName()], $connection);
                 }
                 else {
                     $connection->write("Illegal move. Enter a command:\n");
@@ -113,7 +178,10 @@ class Game {
                 break;
             case 'west':
                 if($this->dungeon->moveWest($player, $connection)) {
-
+                    $position = $player->getPosition();
+                    $position[2] -= 1;
+                    $this->players[$player->getName()]->setPosition($position);
+                    $this->describeRoom($this->players[$player->getName()], $connection);
                 }
                 else {
                     $connection->write("Illegal move. Enter a command:\n");
@@ -121,7 +189,10 @@ class Game {
                 break;
             case 'up':
                 if($this->dungeon->moveUp($player, $connection)) {
-
+                    $position = $player->getPosition();
+                    $position[0] += 1;
+                    $this->players[$player->getName()]->setPosition($position);
+                    $this->describeRoom($this->players[$player->getName()], $connection);
                 }
                 else {
                     $connection->write("Illegal move. Enter a command:\n");
@@ -129,7 +200,10 @@ class Game {
                 break;
             case 'down':
                 if($this->dungeon->moveDown($player, $connection)) {
-
+                    $position = $player->getPosition();
+                    $position[0] -= 1;
+                    $this->players[$player->getName()]->setPosition($position);
+                    $this->describeRoom($this->players[$player->getName()], $connection);
                 }
                 else {
                     $connection->write("Illegal move. Enter a command:\n");
@@ -137,6 +211,23 @@ class Game {
                 break;
             default:
                 $connection->write("Which direction did you want to move?\n");
+        }
+    }
+
+    protected function describeRoom($player, $connection) {
+        $connection->write($this->dungeon->getDescription($player->getPosition()));
+        $playersInRoom = $this->dontIncludeCurrentPlayer($player);
+        // display all players in room, except the current player
+        // (they already know they're in there)
+        if(empty($playersInRoom)) {
+            $connection->write("There is nobody else here\n");
+        }
+        else {
+            $connection->write("\nCurrent players in room: \n");
+            foreach($playersInRoom as $otherPlayer) {
+                $connection->write($otherPlayer . " ");
+            }
+            $connection->write("\n");
         }
     }
 
@@ -161,10 +252,13 @@ class Game {
         // store connection in a pool of connections so we can access it on event trigger
         $this->setConnectionData($connection, ['name' => $name]);
         $playerPosition = $this->dungeon->addNewPlayer($name);
-        $player = new Player($name, $playerPosition);
-        // store this new player in the players array, where their name is the key
+        $player = new Player($name, $playerPosition, $connection);
+        // store this new player obj in the players array, where their name is the key
         // and value is their player object
         $this->players[$name] = $player;
+        // then describe their starting room
+        $this->describeRoom($player, $connection);
+        $connection->write("Commands: move, say, tell, yell.\nFor example 'move north'\n\nEnter a command:\n");
         // $this->sendAll("User $name joins the chat\n", $connection);
 
     }
@@ -178,22 +272,12 @@ class Game {
     {
         return $this->connections->offsetGet($connection);
     }
-    /**
-     * Send data to all connections from the pool except
-     * the specified one.
-     *
-     * @param mixed $data
-     * @param ConnectionInterface $except
-     */
-    protected function sendAll($data, ConnectionInterface $except) {
-        echo "INSIDE SENDALL";
-        echo "data:\n";
-        print_r($data);
-        echo "end data\n";
+
+    protected function sendAll($player, $data, ConnectionInterface $except) {
         // $data here is what was typed in by the user
         foreach ($this->connections as $conn) {
             // send it to everyone except current connection (the user that sends it)
-            if ($conn != $except) $conn->write($data);
+            if ($conn != $except) $conn->write($player->getName() . " yells " . strtoupper($data));
         }
     }
 }
