@@ -20,6 +20,9 @@
                     {
                         "description": "south of starting room",
                         "players": []
+                    },
+                    {
+                        "exists": false
                     }
                 ]
             }

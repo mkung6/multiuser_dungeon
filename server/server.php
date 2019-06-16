@@ -2,16 +2,24 @@
 
 require 'vendor/autoload.php';
 use React\Socket\ConnectionInterface;
+require 'dungeon.php';
+require 'game.php';
 
-initialize_dungeon();
-echo "STARTING POSITION: \n";
-print_r($start_position);
+$file = '../dungeon/dungeon01.json';
+//$FILE = readline('Enter a dungeon file: ');
+$dungeon = new Dungeon($file);
+
 $loop = React\EventLoop\Factory::create();
 $socket = new React\Socket\Server('127.0.0.1:8080', $loop);
-$pool = new ConnectionsPool();
-$socket->on('connection', function(ConnectionInterface $connection) use ($pool){
-    $pool->add($connection);
+$game = new Game($dungeon);
+$socket->on('connection', function(ConnectionInterface $connection) use ($game){
+    // $connection->on('data', function($data) use ($connection){
+    //     $name = $data;
+    //     $connection->write("Welcome, " . $name);
+    // });
+    $game->addPlayer($connection);
 });
 echo "Listening on {$socket->getAddress()}\n";
 $loop->run();
+
  ?>
