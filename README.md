@@ -24,14 +24,6 @@ Or connect to server using telnet
 
 `telnet 127.0.0.1 8080`
 
-### Tests
-
-`cd` to the `/server` folder and input the command
-
-`./vendor/bin/phpunit`
-
-to run the tests.
-
 ### Notes
 
 This was tested on ubuntu 18.04.1 and macOS.
