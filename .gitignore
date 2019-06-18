@@ -1,0 +1,4 @@
+
+server/composer.json
+server/composer.lock
+server/vendor/bin/phpunit
