@@ -30,7 +30,7 @@ This was tested on ubuntu 18.04.1 and macOS.
 
 I chose a JSON format to represent the world data, to try and keep it as flexible as possible. In `dungeon01.json` I added an empty room and players can't go to it simply because there is no `players` field in that room (it's not "transparent"). You can create and enter your own dungeon JSON file (for example, for testing purposes).
 
-I chose ReactPHP to handle websocket programming as well as potential asynchronous functions (promises), and also future HTTP support. I used websockets so that clients can chat with one another in real time, as that was a requirement of the challenge.
+I chose [ReactPHP](https://reactphp.org/) to handle websocket programming as well as potential asynchronous functions (promises), and also future HTTP support. I used websockets so that clients can chat with one another in real time, as that was a requirement of the challenge.
 
 With asynchronous functions we should theoretically not have to worry about race conditions, although for those I would heavily test it to make sure.
 
