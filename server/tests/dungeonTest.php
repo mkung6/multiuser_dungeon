@@ -26,6 +26,7 @@ class testDungeon extends TestCase {
         );
     }
 
+// TODO: refactor Player class to be mocked
     public function testPlayersInRoom() {
         // create dungeon and player
         $file = "./tests/testDungeons/testDungeon01.json";
