@@ -1,0 +1,85 @@
+[
+    {
+        "row": [
+            {
+                "col": [
+
+                ]
+            },
+            {
+                "col": [
+                    {
+
+                    },
+                    {
+                        "description": "downstairs of starting point",
+                        "players": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "row": [
+            {
+                "col": [
+                    {
+
+                    },
+                    {
+                        "description": "north of starting point",
+                        "players": []
+                    }
+                ]
+            },
+            {
+                "col": [
+                    {
+                        "description": "west of starting point",
+                        "players": []
+                    },
+                    {
+                        "start": true,
+                        "description": "starting point",
+                        "players": []
+                    },
+                    {
+                        "description": "east of starting point",
+                        "players": []
+                    }
+                ]
+            },
+            {
+                "col": [
+                    {
+
+                    },
+                    {
+                        "description": "south of starting point",
+                        "players": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "row": [
+            {
+                "col": [
+
+                ]
+            },
+            {
+                "col": [
+                    {
+
+                    },
+                    {
+                        "description": "upstairs of starting point",
+                        "players": []
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -1,0 +1,15 @@
+[
+    {
+        "row": [
+            {
+                "col": [
+                    {
+                        "start": true,
+                        "description": "this is the starting room",
+                        "players": []
+                    }
+                ]
+            }
+        ]
+    }
+]

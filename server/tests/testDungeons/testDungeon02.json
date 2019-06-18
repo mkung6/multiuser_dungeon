@@ -1,0 +1,39 @@
+[
+    {
+        "row": [
+            {
+                "col": [
+                    {
+                        "description": "a",
+                        "players": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "row": [
+            {
+                "col": [
+                    {
+                        "start": true,
+                        "description": "b",
+                        "players": []
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "row": [
+            {
+                "col": [
+                    {
+                        "description": "c",
+                        "players": []
+                    }
+                ]
+            }
+        ]
+    }
+]
