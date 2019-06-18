@@ -24,6 +24,14 @@ Or connect to server using telnet
 
 `telnet 127.0.0.1 8080`
 
+### Tests
+
+`cd` to the `/server` folder and input the command
+
+`./vendor/bin/phpunit`
+
+to run the tests.
+
 ### Notes
 
 This was tested on ubuntu 18.04.1 and macOS.
@@ -39,3 +47,5 @@ Current implementation does not work with NPCs.
 To flesh out the program I would add a database with a user table, as well as monster and item tables, then create my CRUD operations and re-work the game logic. Having a database would alleviate some issues. For example, we are currently storing everything in memory. One thing I would change is to store the player's data in the client, then send that data to the server to perform necessary logic based on user input. It's here that we'd need asynchronous functions, in order to update player data such as current position.
 
 I would like to write tests but due to the time limit (2-3 days), I was unfortunately unable to do so. Given more time, I would like to go ahead and write tests.
+
+Tests are currently being worked on.
